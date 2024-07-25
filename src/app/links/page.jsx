@@ -1,5 +1,5 @@
 'use client'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import Home from '../page'
 import linkshare from '../../../public/Group 273.png'
 import Image from 'next/image'
@@ -7,14 +7,51 @@ import { TfiLineDouble } from 'react-icons/tfi'
 import SingleLink from '@/components/layouts/singleLink/SingleLink'
 import SocialSelect from '@/components/layouts/selectInputs/SelectInputs'
 import { GlobalContextProvider, useGlobalContext } from '../contexts/stateContext'
+import { db } from '../../../firebase/clientApp'
+import { collection, deleteDoc, doc, getDocs, onSnapshot } from 'firebase/firestore'
 
 const page = () => {
-   const {linkState,setLinkState,savedLinks,handleRemove,setsavedLinks,selectedOption,setSelectedOption} = useGlobalContext();
+   const [savedLinks, setSavedLinks] = useState([])
+   const {linkState,setLinkState,etsavedLinks,selectedOption,setSelectedOption} = useGlobalContext();
 
-   // const removeLink = (id)=>{
-   //    const newLinks = savedLinks.filter(link => link.id !== id)
-   //    setsavedLinks(newLinks)
-   // }
+   const handleRemove = async(id)=>{
+      const userDoc = doc(db, 'userLinks', id);
+      await deleteDoc(userDoc)
+   }
+
+
+
+   useEffect(() => {
+      // const fetchUserData = async () => {
+      //   try {
+      //     const q = (collection(db, 'userLinks'));
+      //     const data = await getDocs(q);
+      //     setSavedLinks(data.docs.map((doc)=> ({...doc.data(),id:doc.id})))
+      //     console.log(savedLinks)
+      //   } catch (error) {
+      //     console.error('Error fetching user data:', error);
+      //   }
+      // };
+      // fetchUserData();
+
+      const unsub = onSnapshot(collection(db, 'userLinks'), (snapShot)=>{
+         let list = [];
+         snapShot.docs.forEach(doc=>{
+            list.push({ id: doc.id, ...doc.data()})
+         })
+         setSavedLinks(list);
+      },(error)=>{
+         console.log(error)
+      });
+
+      return ()=>{
+         unsub()
+      }
+    }, []);
+
+
+
+   
   return (
    <Home>
       <div className='bg-white flex flex-col rounded-[12px] text-[#737373]'>
@@ -31,15 +68,15 @@ const page = () => {
 
                <div className=' bg-white flex flex-col gap-6'>
                   {savedLinks.map((link,index)=>(
-                     <div key={index} className='rounded-xl bg-lightBg p-5 flex flex-col'>
+                     <div key={link.id} className='rounded-xl bg-lightBg p-5 flex flex-col'>
                         <div className='flex-center justify-between'>
                            <div className='text-[#737373] flex-center gap-2'>
                               <TfiLineDouble/> <span className='font-bold'>Link #{savedLinks.indexOf(link)+1}</span>
                            </div>
-                           <button onClick={()=>handleRemove(index)}>Remove</button>
+                           <button onClick={()=>handleRemove(link.id)}>Remove</button>
                         </div>
                         <div className='my-3'>
-                           <SingleLink platform={link.platform} url={link.url} index={index}/>
+                           <SingleLink platform={link.platform} url={link.link} savedLinks={savedLinks} id={link.id} setSavedLinks={setSavedLinks}/>
                         </div>
                   </div>
                   ))}

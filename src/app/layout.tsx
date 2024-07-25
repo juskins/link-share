@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import {GlobalContextProvider} from './contexts/stateContext'
+import {GlobalContextProvider} from './contexts/stateContext';
+import {AuthContextProvider} from './contexts/AuthContext';
 
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <GlobalContextProvider>
-          {children}
+            {children}
         </GlobalContextProvider></body>
     </html>
   );

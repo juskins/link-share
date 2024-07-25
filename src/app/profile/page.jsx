@@ -1,22 +1,74 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Home from '../page'
 import vector from '../../../public/Vector.png'
 import phImage from '../../../public/ph_image.png'
 import Image from 'next/image'
+import { getStorage, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useGlobalContext } from '../contexts/stateContext'
+import { addDoc, collection } from 'firebase/firestore'
+import { db } from '../../../firebase/clientApp'
 
 const page = () => {
   const {linkState,setLinkState} = useGlobalContext();
   const [errors, setErrors] = useState({firstName:"",lastName:''});
   const [inputs, setInputs] = useState({firstName:'',lastName:''})
-  const [image, setImage] = useState(null);
+  const [file, setFile] = useState(''); 
+  const [data, setData] = useState(null)
+
+  const storage = getStorage();
+
+  const addImgToStore = async(value)=>{
+    await addDoc(collection(db, 'images'),{imageUrl:value} )
+  }
+
+  useEffect(()=>{
+    const uploadFile = ()=>{
+
+      const name = new Date().getTime() + file
+      console.log(name)
+      const storageRef = ref(storage, name);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      
+      uploadTask.on(
+        'state_changed',
+        (snapshot) =>{
+          const progress = 
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('upload is' + progress + '% done')
+          switch(snapshot.state){
+            case 'paused':
+              console.log('Upload is paused') ;
+              break;
+            case 'running':
+              console.log('Upload is running') ;
+              break;
+            default:
+              break;
+          }
+        },
+        (error)=>{
+          console.log(error)
+        },
+        ()=>{
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            console.log('File available at', downloadURL)
+            setData(downloadURL)
+            addImgToStore(downloadURL)
+          })
+        }
+      )
+    }
+    file && uploadFile();
+    // addImgToStore()
+    
+  },[file])
 
 const handleImageChange = (e)=>{
   const file = e.target.files[0];
   if(file){
-    const imageUrl = URL.createObjectURL(file);
-    setImage(imageUrl);
+    // const imageUrl = URL.createObjectURL(file);
+    setFile(file);
   }
 }
 
@@ -68,10 +120,10 @@ const handleImageChange = (e)=>{
                 <div className='flex-center justify-between gap-4'>
                   <p>Profile picture</p>
                  <div className='flex-center gap-6 w-[432px] h-[193px]'>
-                    <div style={{backgroundImage:image ? `url(${image})` : 'none', filter:image ? 'blur()' :'none'}} className='bg-center bg-cover filter blur-lg rounded-xl relative w-1/2 h-full flex-center text-btn font-semibold flex-col m-auto bg-[#EFEBFF]'>
-                        <Image src={image ?vector : phImage} className='' alt='vector'/>
+                    <div style={{backgroundImage:file ? `url(${file})` : 'none', filter:file ? 'blur()' :'none'}} className='bg-center bg-cover filter blur-lg rounded-xl relative w-1/2 h-full flex-center text-btn font-semibold flex-col m-auto bg-[#EFEBFF]'>
+                        <Image src={file ?vector : phImage} className='' alt='vector'/>
                         <input type="file" onChange={handleImageChange} className=' cursor-pointer opacity-[0%] absolute top-10 left-10 right-10 bottom-10'/>
-                        <p style={{color:image && 'white'}}>+ Upload Image</p>
+                        <p style={{color:file && 'white'}}>+ Upload Image</p>
                     </div>
                     <small className='text-[12px] w-1/2'>Image must be below 1024x1024px. Use PNG or JPG format.</small>
                  </div>

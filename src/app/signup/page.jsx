@@ -4,11 +4,19 @@ import React, { useState } from 'react'
 import { AiTwotoneMail } from "react-icons/ai";
 import { PiLockKeyFill } from 'react-icons/pi';
 import Link from 'next/link';
+import {auth} from '../../../firebase/clientApp'
+import { useGlobalContext } from '../contexts/stateContext';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+
 
 
 const page = () => {
    const [errors, setErrors] = useState({email:"",password:''});
    const [inputs, setInputs] = useState({email:'',password:''})
+   const {currentUser, setCurrentUser} = useGlobalContext();
+
+   const router = useRouter();
 
    const validateEmail = (email) => {
       if (!email) {
@@ -50,9 +58,19 @@ const page = () => {
       setErrors({email: emailError, password: passwordError });
   
       if (!emailError && !passwordError) {
-        // Submit form
-        alert('Form submitted successfully!');
-      }
+        createUserWithEmailAndPassword(auth, inputs.email, inputs.password)
+          .then((userCredential) => {
+            // Signed up
+            setCurrentUser(userCredential.user)
+            router.push('/links');
+            console.log('Signed up with:', userCredential.user);
+            alert('welcome')
+          })
+          .catch((error) => {
+            console.error('Error signing up:', error.message);
+          });
+           
+          }
     };
   return (
     <div className='max-w-[1440px] bg-background m-auto min-h-screen flex-center'>
@@ -114,7 +132,7 @@ const page = () => {
                </div>
 
                <p className='text-[#737373] text-[12px]'>Password must contain at least 8 characters</p>
-               <button className='bg-btn hover:bg-btn-hover py-[11px]
+               <button type='submit' className='bg-btn hover:bg-btn-hover py-[11px]
                rounded-lg text-white px-[27px]'>Create new account</button>
                <p className='text-[#737373] text-center'>Already have an account? <span className='text-btn'><Link href='/login'>Login</Link></span></p>
             </form>

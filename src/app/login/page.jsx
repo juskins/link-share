@@ -1,16 +1,26 @@
 "use client";
-import Image from 'next/image'
-import logo from '../../../public/logo1.svg'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { AiTwotoneMail } from "react-icons/ai";
 import { PiLockKeyFill } from 'react-icons/pi';
 import Link from 'next/link';
+import {auth} from '../../../firebase/clientApp'
+import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { AuthContext } from '../contexts/AuthContext';
+import { useGlobalContext } from '../contexts/stateContext';
 
 
 const page = () => {
    const [errors, setErrors] = useState({email:"",password:''});
    const [inputs, setInputs] = useState({email:'',password:''})
-   const [error, setError] = useState(true)
+   const [error, setError] = useState(false);
+   const {currentUser, setCurrentUser} = useGlobalContext();
+
+   const router = useRouter();
+
+  //  const {dispatch} = useContext(AuthContext)
+
+    
 
    const validateEmail = (email) => {
       if (!email) {
@@ -50,10 +60,22 @@ const page = () => {
       const emailError = validateEmail(inputs.email);
       const passwordError = validatePassword(inputs.password);
       setErrors({email: emailError, password: passwordError });
-  
       if (!emailError && !passwordError) {
-        // Submit form
-        alert('Form submitted successfully!');
+        signInWithEmailAndPassword(auth, inputs.email, inputs.password)
+      .then((userCredential) => {
+        // Signed in
+        // dispatch({type:'LOGIN', payload:userCredential.user})
+        setCurrentUser(userCredential.user)
+        router.push('/links');
+        console.log('Signed in with:', userCredential.user);
+        alert('Welcome!');
+
+      })
+      .catch((error) => {
+        console.error('Error signing in:', error.message);
+        setError(true)
+      });
+
       }
     };
 

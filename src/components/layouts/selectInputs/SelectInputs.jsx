@@ -1,10 +1,12 @@
 import { useGlobalContext } from '@/app/contexts/stateContext';
-import React, { useState } from 'react';
+import { addDoc, collection, getDocs } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import { AiTwotonlink } from 'react-icons/ai';
 import { FaGithub, FaLinkedin, FaYoutube, FaFacebook, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { FiLink } from 'react-icons/fi';
 import { PiGithubLogoFill } from 'react-icons/pi';
 import { SiFrontendmentor } from 'react-icons/si';
+import { db } from '../../../../firebase/clientApp';
 
 const options = [
   { value: 'GitHub', label: 'GitHub', icon: <PiGithubLogoFill /> },
@@ -15,10 +17,13 @@ const options = [
 ];
 
 const SocialSelect = () => {
+  const [user, setUser] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [errors, setErrors] = useState('');
   const [link, setLink] = useState('');
   const {editIndex,setEditIndex,linkState,setLinkState,savedLinks,setSavedLinks,selectedOption, setSelectedOption} = useGlobalContext();
+
+
 
 
 
@@ -43,7 +48,7 @@ const SocialSelect = () => {
     setIsOpen(false);
   };
 
-  const handleSave = ()=>{
+  const handleSave = async()=>{
     if (selectedOption && link) {
       if (editIndex !== null) {
         const updatedLinks = savedLinks.map((item, index) =>
@@ -52,22 +57,16 @@ const SocialSelect = () => {
         setSavedLinks(updatedLinks);
         setEditIndex(null);
       } else {
-        setSavedLinks([...savedLinks, {platform: selectedOption, url: link }]);
+        // setSavedLinks([...savedLinks, {platform: selectedOption, url: link }]);
         setLinkState(false);
+        await addDoc(collection(db, 'userLinks'),{platform: selectedOption, link:link} )
       }
       console.log(savedLinks)
-
-      // setSelectedOption('');
       setLink('');
 
     }
 
-  //  setsavedLinks([...savedLinks, {
-  //     id:Date.now(),
-  //     platform:selectedOption,
-  //     url:link,
-  //  }]);
-   // console.log(savedLinks)
+  
   }
 
   
