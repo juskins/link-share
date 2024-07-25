@@ -1,3 +1,4 @@
+'use client'
 import { useGlobalContext } from '@/app/contexts/stateContext';
 import { addDoc, collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';

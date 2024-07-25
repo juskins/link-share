@@ -1,3 +1,4 @@
+'use client'
 import { useGlobalContext } from '@/app/contexts/stateContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
